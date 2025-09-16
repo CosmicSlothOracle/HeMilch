@@ -1,0 +1,13 @@
+{
+  "level_key": "level_ninja_stage",
+  "display_name": "Ninja Training Grounds",
+  "author": "imported_from_qte",
+  "description": "Two-stage seamless level using existing qte backgrounds.",
+  "schema_version": 2,
+  "sections": [
+    "sections/section_01/section.json",
+    "sections/section_02/section.json"
+  ],
+  "default_music": "/qte/audio/ninja_theme.ogg",
+  "preview": "/qte/background/ninjastage0.png"
+}

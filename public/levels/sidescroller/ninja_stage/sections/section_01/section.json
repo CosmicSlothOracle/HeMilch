@@ -1,0 +1,18 @@
+{
+  "section_key": "section_01",
+  "index": 1,
+  "resolution": [1920,1080],
+  "overlap_px": 64,
+  "background": "/levels/sidescroller/ninja_stage/sections/section_01/stage.png",
+  "heatmap": "/levels/sidescroller/ninja_stage/sections/section_01/heatmap.png",
+  "foreground": "/levels/sidescroller/ninja_stage/sections/section_01/stage_foreground.png",
+  "collision": null,
+  "objects": null,
+  "parallax_layers": [],
+  "spawn_points": [
+    {"name": "player_start", "x": 190, "y": 900},
+    {"name": "npc_spawn_1", "x": 1675, "y": 890}
+  ],
+  "notes": "First ninja stage. Exits to the right into ninjastage1.",
+  "wrap_on_right": true
+}

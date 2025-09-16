@@ -1,0 +1,42 @@
+{
+  "frames": {
+    "fly_0": { "frame": { "x": 0, "y": 0, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "fly_1": { "frame": { "x": 0, "y": 256, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "fly_2": { "frame": { "x": 0, "y": 512, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "fly_3": { "frame": { "x": 0, "y": 768, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "fly_4": { "frame": { "x": 256, "y": 0, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "fly_5": { "frame": { "x": 256, "y": 256, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+
+    "projectile2_0": { "frame": { "x": 0, "y": 1024, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "projectile2_1": { "frame": { "x": 0, "y": 1280, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "projectile2_2": { "frame": { "x": 0, "y": 1536, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "projectile2_3": { "frame": { "x": 0, "y": 1792, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "blast2_0": { "frame": { "x": 256, "y": 1024, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "blast2_1": { "frame": { "x": 256, "y": 1280, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "blast2_2": { "frame": { "x": 256, "y": 1536, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } },
+    "blast2_3": { "frame": { "x": 256, "y": 1792, "w": 256, "h": 256 }, "rotated": false, "trimmed": false, "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 256 }, "sourceSize": { "w": 256, "h": 256 } }
+  },
+  "animations": {
+    "fly": ["fly_0", "fly_1", "fly_2", "fly_3", "fly_4", "fly_5"],
+    "fly_hold": ["fly_2", "fly_3", "fly_4", "fly_5"],
+    "projectile2": ["projectile2_0", "projectile2_1", "projectile2_2", "projectile2_3"],
+    "blast2": ["blast2_0", "blast2_1", "blast2_2", "blast2_3"]
+  },
+  "animationSettings": {
+    "fly_hold": {
+      "fps": 6
+    }
+  },
+  "meta": {
+    "app": "custom-atlas-builder",
+    "version": "1.0",
+    "image": "atlas4_1.png",
+    "format": "RGBA8888",
+    "size": { "w": 2048, "h": 2048 },
+    "scale": "1",
+    "frameSize": { "w": 256, "h": 256 },
+    "tileSize": [256, 256],
+    "fps": 12,
+    "layout": "columns_left_to_right"
+  }
+}

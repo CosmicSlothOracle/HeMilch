@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QTE Animation Viewer Demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+      }
+
+      #gameCanvas {
+        display: block;
+        margin: 0 auto;
+        background: #071428;
+        border: 2px solid #333;
+      }
+
+      #instructions {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        max-width: 300px;
+      }
+
+      #instructions h3 {
+        margin: 0 0 10px 0;
+        color: #4aa3ff;
+      }
+
+      #instructions ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      #instructions li {
+        margin: 5px 0;
+      }
+
+      .key {
+        background: #333;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas" width="1024" height="576"></canvas>
+
+    <div id="instructions">
+      <h3>🎮 Controls</h3>
+      <ul>
+        <li>
+          <strong>P1 (Blue):</strong> <span class="key">WASD</span> move,
+          <span class="key">E</span> attack, <span class="key">R</span> parry,
+          <span class="key">T</span> ranged
+        </li>
+        <li>
+          <strong>P2 (Red):</strong> <span class="key">Arrow Keys</span> move,
+          <span class="key">Num1</span> attack,
+          <span class="key">Num2</span> parry,
+          <span class="key">Num3</span> ranged
+        </li>
+        <li>
+          <strong>Animation Viewer:</strong> Click
+          <span class="key">🎬 View Animations</span> button or press
+          <span class="key">F1</span>
+        </li>
+      </ul>
+
+      <h3>🎬 Animation Viewer</h3>
+      <ul>
+        <li>
+          <span class="key">←</span> <span class="key">→</span> Navigate
+          animations
+        </li>
+        <li><span class="key">Space</span> Play/Pause</li>
+        <li><span class="key">Esc</span> Close viewer</li>
+      </ul>
+    </div>
+
+    <script type="module">
+      // Import the game modules
+      import { createGame } from "./gameLoop.js";
+      import { getAnimationViewer } from "./animationViewer.js";
+
+      // Initialize the game
+      const canvas = document.getElementById("gameCanvas");
+      const game = createGame(canvas);
+
+      // Add F1 key to open animation viewer
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "F1") {
+          e.preventDefault();
+          getAnimationViewer().toggle();
+        }
+      });
+
+      // Log success
+      console.log("🎮 QTE Game with Animation Viewer loaded successfully!");
+      console.log(
+        'Press F1 or click the "🎬 View Animations" button to open the animation viewer'
+      );
+    </script>
+  </body>
+</html>

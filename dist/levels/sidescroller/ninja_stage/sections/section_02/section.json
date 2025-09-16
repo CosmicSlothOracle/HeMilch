@@ -1,0 +1,16 @@
+{
+  "section_key": "section_02",
+  "index": 2,
+  "resolution": [1920,1080],
+  "overlap_px": 64,
+  "background": "/levels/sidescroller/ninja_stage/sections/section_02/stage.png",
+  "heatmap": "/levels/sidescroller/ninja_stage/sections/section_02/heatmap.png",
+  "collision": null,
+  "objects": null,
+  "parallax_layers": [],
+  "spawn_points": [
+    {"name": "entry_from_left", "x": 0, "y": 900},
+    {"name": "npc_spawn_1", "x": 1675, "y": 890}
+  ],
+  "notes": "Second ninja stage, follows section_01 to the right."
+}

@@ -1,0 +1,20 @@
+{
+  "characters": {
+    "ninja": {
+      "json": ["Atlas.json"],
+      "images": ["Atlas.png"]
+    },
+    "cyboard": {
+      "json": ["atlas2.json"],
+      "images": ["atlas2.png"]
+    },
+    "granny": {
+      "json": ["atlas3.json"],
+      "images": ["atlas3.png"]
+    },
+    "Laurin": {
+      "json": ["atlas4.json", "atlas4_1.json"],
+      "images": ["atlas4.png", "atlas4_1.png"]
+    }
+  }
+}

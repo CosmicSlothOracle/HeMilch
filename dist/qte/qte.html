@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QTE Animation Viewer Demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+      }
+
+      #gameCanvas {
+        display: block;
+        margin: 0 auto;
+        background: #071428;
+        border: 2px solid #333;
+      }
+
+      #instructions {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        max-width: 300px;
+      }
+
+      #instructions h3 {
+        margin: 0 0 10px 0;
+        color: #4aa3ff;
+      }
+
+      #instructions ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      #instructions li {
+        margin: 5px 0;
+      }
+
+      .key {
+        background: #333;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-weight: bold;
+      }
+
+      .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading" id="loading">Loading QTE Animation Viewer...</div>
+
+    <canvas
+      id="gameCanvas"
+      width="1024"
+      height="576"
+      style="display: none"
+    ></canvas>
+
+    <div id="instructions" style="display: none">
+      <h3>🎮 Controls</h3>
+      <ul>
+        <li>
+          <strong>P1 (Blue):</strong> <span class="key">WASD</span> move,
+          <span class="key">E</span> attack, <span class="key">R</span> parry,
+          <span class="key">T</span> ranged
+        </li>
+        <li>
+          <strong>P2 (Red):</strong> <span class="key">Arrow Keys</span> move,
+          <span class="key">Num1</span> attack,
+          <span class="key">Num2</span> parry,
+          <span class="key">Num3</span> ranged
+        </li>
+        <li>
+          <strong>Animation Viewer:</strong> Click
+          <span class="key">🎬 View Animations</span> button or press
+          <span class="key">F1</span>
+        </li>
+      </ul>
+
+      <h3>🎬 Animation Viewer</h3>
+      <ul>
+        <li>
+          <span class="key">←</span> <span class="key">→</span> Navigate
+          animations
+        </li>
+        <li><span class="key">Space</span> Play/Pause</li>
+        <li><span class="key">Esc</span> Close viewer</li>
+      </ul>
+    </div>
+
+    <script>
+      // Simple QTE system with animation viewer
+      // This is a standalone version that doesn't require module imports
+
+      // Basic sprite animator
+      class SpriteAnimator {
+        constructor(image, frameW, frameH, animations = {}) {
+          this.image = image;
+          this.frameW = frameW;
+          this.frameH = frameH;
+          this.animations = animations;
+          this.state = "idle";
+          this.frame = 0;
+          this.acc = 0;
+          this.fps = 12;
+          this.loop = true;
+        }
+
+        setState(state) {
+          if (this.state === state) return;
+          this.state = state;
+          this.frame = 0;
+          this.acc = 0;
+          const a = this.animations[state];
+          if (a) {
+            this.fps = a.fps;
+            this.loop = a.loop;
+          }
+        }
+
+        update(dt) {
+          const a = this.animations[this.state];
+          if (!a) return;
+          this.acc += dt;
+          const frameTime = 1 / (a.fps || this.fps);
+          while (this.acc >= frameTime) {
+            this.acc -= frameTime;
+            this.frame++;
+            if (this.frame >= a.frames) {
+              if (a.loop) this.frame = 0;
+              else this.frame = a.frames - 1;
+            }
+          }
+        }
+
+        draw(ctx, x, y, w, h, flip = false) {
+          const a = this.animations[this.state];
+          if (!a || !this.image) return;
+
+          let sx = this.frame * (a.frameW || this.frameW);
+          let sy = 0;
+
+          let frameW = a.frameW || this.frameW;
+          let frameH = a.frameH || this.frameH;
+
+          if (a.rects && a.rects.length > 0) {
+            const r = a.rects[this.frame % a.rects.length];
+            sx = r.x;
+            sy = r.y;
+            frameW = r.w;
+            frameH = r.h;
+          }
+
+          ctx.save();
+          if (flip) {
+            ctx.translate(x + w, 0);
+            ctx.scale(-1, 1);
+            x = 0;
+          }
+          ctx.drawImage(this.image, sx, sy, frameW, frameH, x, y, w, h);
+          ctx.restore();
+        }
+      }
+
+      // Animation viewer modal
+      class AnimationViewer {
+        constructor() {
+          this.modal = null;
+          this.canvas = null;
+          this.ctx = null;
+          this.currentAnimationIndex = 0;
+          this.animations = [];
+          this.animators = new Map();
+          this.isVisible = false;
+          this.animationId = null;
+          this.currentCharacter = "ninja";
+          this.createModal();
+          this.setupEventListeners();
+        }
+
+        createModal() {
+          this.modal = document.createElement("div");
+          this.modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: none;
+                    z-index: 10000;
+                    font-family: Arial, sans-serif;
+                `;
+
+          const content = document.createElement("div");
+          content.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #1a1a1a;
+                    border: 2px solid #333;
+                    border-radius: 8px;
+                    padding: 20px;
+                    min-width: 600px;
+                    max-width: 90vw;
+                    max-height: 90vh;
+                    overflow: hidden;
+                `;
+
+          const header = document.createElement("div");
+          header.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                    border-bottom: 1px solid #333;
+                    padding-bottom: 10px;
+                `;
+
+          const title = document.createElement("h2");
+          title.textContent = "QTE Animation Viewer";
+          title.style.cssText = "color: #fff; margin: 0; font-size: 24px;";
+
+          const closeBtn = document.createElement("button");
+          closeBtn.textContent = "×";
+          closeBtn.style.cssText = `
+                    background: #ff4444;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    width: 30px;
+                    height: 30px;
+                    font-size: 18px;
+                    cursor: pointer;
+                `;
+          closeBtn.onclick = () => this.hide();
+
+          header.appendChild(title);
+          header.appendChild(closeBtn);
+
+          const characterSelector = document.createElement("div");
+          characterSelector.style.cssText =
+            "margin-bottom: 20px; display: flex; gap: 10px; align-items: center;";
+
+          const characterLabel = document.createElement("label");
+          characterLabel.textContent = "Character:";
+          characterLabel.style.cssText = "color: #fff; font-weight: bold;";
+
+          const characterSelect = document.createElement("select");
+          characterSelect.style.cssText = `
+                    background: #333;
+                    color: #fff;
+                    border: 1px solid #555;
+                    border-radius: 4px;
+                    padding: 5px 10px;
+                `;
+          characterSelect.innerHTML =
+            '<option value="ninja">Ninja</option><option value="cyboard">Cyboard</option>';
+          characterSelect.onchange = (e) => {
+            this.currentCharacter = e.target.value;
+            this.loadAnimations();
+            this.currentAnimationIndex = 0;
+            this.updateDisplay();
+          };
+
+          characterSelector.appendChild(characterLabel);
+          characterSelector.appendChild(characterSelect);
+
+          const displayArea = document.createElement("div");
+          displayArea.style.cssText =
+            "display: flex; flex-direction: column; align-items: center; gap: 20px;";
+
+          this.canvas = document.createElement("canvas");
+          this.canvas.width = 256;
+          this.canvas.height = 256;
+          this.canvas.style.cssText = `
+                    border: 2px solid #555;
+                    border-radius: 4px;
+                    background: #000;
+                    image-rendering: pixelated;
+                `;
+          this.ctx = this.canvas.getContext("2d");
+
+          const infoDisplay = document.createElement("div");
+          infoDisplay.id = "animation-info";
+          infoDisplay.style.cssText = `
+                    color: #fff;
+                    text-align: center;
+                    font-size: 16px;
+                    min-height: 60px;
+                `;
+
+          const controls = document.createElement("div");
+          controls.style.cssText =
+            "display: flex; gap: 10px; align-items: center; justify-content: center;";
+
+          const prevBtn = document.createElement("button");
+          prevBtn.textContent = "◀ Previous";
+          prevBtn.style.cssText = `
+                    background: #444;
+                    color: white;
+                    border: 1px solid #666;
+                    border-radius: 4px;
+                    padding: 8px 16px;
+                    cursor: pointer;
+                `;
+          prevBtn.onclick = () => this.previousAnimation();
+
+          const nextBtn = document.createElement("button");
+          nextBtn.textContent = "Next ▶";
+          nextBtn.style.cssText = `
+                    background: #444;
+                    color: white;
+                    border: 1px solid #666;
+                    border-radius: 4px;
+                    padding: 8px 16px;
+                    cursor: pointer;
+                `;
+          nextBtn.onclick = () => this.nextAnimation();
+
+          const playPauseBtn = document.createElement("button");
+          playPauseBtn.id = "play-pause-btn";
+          playPauseBtn.textContent = "⏸ Pause";
+          playPauseBtn.style.cssText = `
+                    background: #0066cc;
+                    color: white;
+                    border: 1px solid #0088ff;
+                    border-radius: 4px;
+                    padding: 8px 16px;
+                    cursor: pointer;
+                `;
+          playPauseBtn.onclick = () => this.togglePlayPause();
+
+          controls.appendChild(prevBtn);
+          controls.appendChild(playPauseBtn);
+          controls.appendChild(nextBtn);
+
+          const animationList = document.createElement("div");
+          animationList.id = "animation-list";
+          animationList.style.cssText = `
+                    margin-top: 20px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #333;
+                    border-radius: 4px;
+                    background: #222;
+                `;
+
+          displayArea.appendChild(this.canvas);
+          displayArea.appendChild(infoDisplay);
+          displayArea.appendChild(controls);
+          displayArea.appendChild(animationList);
+
+          content.appendChild(header);
+          content.appendChild(characterSelector);
+          content.appendChild(displayArea);
+          this.modal.appendChild(content);
+          document.body.appendChild(this.modal);
+        }
+
+        setupEventListeners() {
+          document.addEventListener("keydown", (e) => {
+            if (!this.isVisible) return;
+
+            switch (e.key) {
+              case "Escape":
+                this.hide();
+                break;
+              case "ArrowLeft":
+                this.previousAnimation();
+                break;
+              case "ArrowRight":
+                this.nextAnimation();
+                break;
+              case " ":
+                e.preventDefault();
+                this.togglePlayPause();
+                break;
+            }
+          });
+        }
+
+        async loadAnimations() {
+          try {
+            // Load atlas data
+            const response = await fetch(
+              `/qte/${this.currentCharacter}/atlas.json`
+            );
+            const atlasData = await response.json();
+
+            // Load atlas image
+            const image = new Image();
+            image.src = `/qte/${this.currentCharacter}/atlas.png`;
+            await new Promise((resolve) => {
+              image.onload = resolve;
+            });
+
+            this.animations = [];
+            this.animators.clear();
+
+            // Get actual frame counts from atlas data
+            const getFrameCount = (animationName) => {
+              if (atlasData.animations && atlasData.animations[animationName]) {
+                return atlasData.animations[animationName].length;
+              }
+
+              // Fallback: count frames in the frames object
+              let count = 0;
+              for (const key in atlasData.frames) {
+                if (key.startsWith(`${animationName}_`)) {
+                  count++;
+                }
+              }
+              return count;
+            };
+
+            const animationConfigs = [
+              {
+                name: "idle",
+                frames: getFrameCount("idle"),
+                fps: 6,
+                loop: true,
+              },
+              {
+                name: "walk",
+                frames: getFrameCount("walk"),
+                fps: 10,
+                loop: true,
+              },
+              {
+                name: "jump",
+                frames: getFrameCount("jump"),
+                fps: 12,
+                loop: false,
+              },
+              {
+                name: "attack",
+                frames: getFrameCount("attack"),
+                fps: 12,
+                loop: false,
+              },
+              {
+                name: "parry",
+                frames: getFrameCount("parry"),
+                fps: 10,
+                loop: false,
+              },
+              {
+                name: "spawn",
+                frames: getFrameCount("spawn"),
+                fps: 8,
+                loop: false,
+              },
+              {
+                name: "defeat",
+                frames: getFrameCount("defeat"),
+                fps: 6,
+                loop: false,
+              },
+              {
+                name: "projectile",
+                frames: getFrameCount("projectile"),
+                fps: 12,
+                loop: true,
+              },
+              {
+                name: "ranged",
+                frames: getFrameCount("ranged"),
+                fps: 12,
+                loop: false,
+              },
+              {
+                name: "blast",
+                frames: getFrameCount("blast"),
+                fps: 12,
+                loop: false,
+              },
+            ];
+
+            for (const config of animationConfigs) {
+              const animator = (window.QTE && window.QTE.SpriteAnimator)
+                ? new window.QTE.SpriteAnimator(image, 256, 256, {
+                    [config.name]: {
+                      frames: config.frames,
+                      fps: config.fps,
+                      loop: config.loop,
+                      frameW: 256,
+                      frameH: 256,
+                      rects: this.getAtlasRects(atlasData, config.name),
+                      image: image,
+                    },
+                  })
+                : new SpriteAnimator(image, 256, 256, {
+                    [config.name]: {
+                      frames: config.frames,
+                      fps: config.fps,
+                      loop: config.loop,
+                      frameW: 256,
+                      frameH: 256,
+                      rects: this.getAtlasRects(atlasData, config.name),
+                      image: image,
+                    },
+                  });
+                [config.name]: {
+                  frames: config.frames,
+                  fps: config.fps,
+                  loop: config.loop,
+                  frameW: 256,
+                  frameH: 256,
+                  rects: this.getAtlasRects(atlasData, config.name),
+                  image: image,
+                },
+              });
+
+              this.animations.push({
+                name: config.name,
+                character: this.currentCharacter,
+                frames: config.frames,
+                fps: config.fps,
+                loop: config.loop,
+              });
+              this.animators.set(config.name, animator);
+            }
+
+            this.updateAnimationList();
+            this.updateDisplay();
+          } catch (error) {
+            console.error("Failed to load animations:", error);
+          }
+        }
+
+        getAtlasRects(atlasData, animationName) {
+          const rects = [];
+          const frames = atlasData.frames;
+
+          // Look for frames matching the animation name
+          for (let i = 0; i < 20; i++) {
+            const frameKey = `${animationName}_${i}`;
+            if (frames[frameKey]) {
+              const frame = frames[frameKey].frame;
+              rects.push({
+                x: frame.x,
+                y: frame.y,
+                w: frame.w,
+                h: frame.h,
+              });
+            }
+          }
+
+          return rects;
+        }
+
+        updateAnimationList() {
+          const list = document.getElementById("animation-list");
+          if (!list) return;
+
+          list.innerHTML = "";
+
+          this.animations.forEach((anim, index) => {
+            const item = document.createElement("div");
+            item.style.cssText = `
+                        padding: 8px 12px;
+                        cursor: pointer;
+                        border-bottom: 1px solid #333;
+                        color: #fff;
+                        font-size: 14px;
+                        transition: background-color 0.2s;
+                    `;
+
+            if (index === this.currentAnimationIndex) {
+              item.style.backgroundColor = "#0066cc";
+            }
+
+            item.innerHTML = `
+                        <div style="font-weight: bold;">${anim.name}</div>
+                        <div style="font-size: 12px; color: #aaa;">
+                            ${anim.frames} frames • ${anim.fps} fps • ${
+              anim.loop ? "Loop" : "Once"
+            }
+                        </div>
+                    `;
+
+            item.onclick = () => {
+              this.currentAnimationIndex = index;
+              this.updateDisplay();
+              this.updateAnimationList();
+            };
+
+            list.appendChild(item);
+          });
+        }
+
+        updateDisplay() {
+          if (this.animations.length === 0) return;
+
+          const currentAnim = this.animations[this.currentAnimationIndex];
+          const animator = this.animators.get(currentAnim.name);
+
+          if (!animator) return;
+
+          animator.setState(currentAnim.name);
+
+          const infoDisplay = document.getElementById("animation-info");
+          if (infoDisplay) {
+            infoDisplay.innerHTML = `
+                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">
+                            ${currentAnim.name.toUpperCase()}
+                        </div>
+                        <div style="font-size: 14px; color: #aaa;">
+                            ${currentAnim.character} • ${
+              currentAnim.frames
+            } frames • ${currentAnim.fps} fps • ${
+              currentAnim.loop ? "Looping" : "Single play"
+            }
+                        </div>
+                    `;
+          }
+
+          if (!this.animationId) {
+            this.startAnimationLoop();
+          }
+        }
+
+        startAnimationLoop() {
+          const animate = () => {
+            if (!this.isVisible) {
+              this.animationId = null;
+              return;
+            }
+
+            const currentAnim = this.animations[this.currentAnimationIndex];
+            const animator = this.animators.get(currentAnim.name);
+
+            if (animator) {
+              this.ctx.fillStyle = "#000";
+              this.ctx.fillRect(0, 0, 256, 256);
+
+              animator.update(1 / 60);
+              animator.draw(this.ctx, 0, 0, 256, 256);
+            }
+
+            this.animationId = requestAnimationFrame(animate);
+          };
+
+          this.animationId = requestAnimationFrame(animate);
+        }
+
+        previousAnimation() {
+          if (this.animations.length === 0) return;
+          this.currentAnimationIndex =
+            (this.currentAnimationIndex - 1 + this.animations.length) %
+            this.animations.length;
+          this.updateDisplay();
+          this.updateAnimationList();
+        }
+
+        nextAnimation() {
+          if (this.animations.length === 0) return;
+          this.currentAnimationIndex =
+            (this.currentAnimationIndex + 1) % this.animations.length;
+          this.updateDisplay();
+          this.updateAnimationList();
+        }
+
+        togglePlayPause() {
+          const btn = document.getElementById("play-pause-btn");
+          if (!btn) return;
+
+          if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+            btn.textContent = "▶ Play";
+            btn.style.background = "#0066cc";
+          } else {
+            this.startAnimationLoop();
+            btn.textContent = "⏸ Pause";
+            btn.style.background = "#cc6600";
+          }
+        }
+
+        show() {
+          this.isVisible = true;
+          this.modal.style.display = "block";
+          this.loadAnimations();
+        }
+
+        hide() {
+          this.isVisible = false;
+          this.modal.style.display = "none";
+          if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+          }
+        }
+      }
+
+      // Initialize the system
+      let animationViewer = null;
+
+      function initQTE() {
+        // Hide loading
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("gameCanvas").style.display = "block";
+        document.getElementById("instructions").style.display = "block";
+
+        // Create animation viewer
+        animationViewer = new AnimationViewer();
+
+        // Create button to open animation viewer
+        const btn = document.createElement("button");
+        btn.textContent = "🎬 View Animations";
+        btn.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                z-index: 1000;
+                background: #0066cc;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            `;
+        btn.onclick = () => animationViewer.show();
+        document.body.appendChild(btn);
+
+        // Add F1 key support
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "F1") {
+            e.preventDefault();
+            animationViewer.toggle();
+          }
+        });
+
+        console.log("🎮 QTE Animation Viewer loaded successfully!");
+        console.log(
+          'Press F1 or click the "🎬 View Animations" button to open the animation viewer'
+        );
+      }
+
+      // Start when page loads
+      window.addEventListener("load", initQTE);
+    </script>
+  </body>
+</html>

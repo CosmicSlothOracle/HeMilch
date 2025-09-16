@@ -1,0 +1,10 @@
+Button	Aktion	Sprite
+X	Jump	jump
+△	Parry	parry
+□	Transform	transform
+○	Dodge	dodge
+L1	Ranged 1	ranged1
+L2	Ranged 2	ranged2
+R1	Attack 1	attack1
+R2	Attack 2	attack2
+L3/D-Pad	Walk	walk
